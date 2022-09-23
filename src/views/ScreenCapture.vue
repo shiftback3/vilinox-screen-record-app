@@ -5,12 +5,21 @@
       <span>Live Preview</span>
     </div>
     <video id="videoElement" class="video-display" autoplay></video>
-    <video
-      id="videoElement2"
-      class="video-display"
-      style="display: none"
-      controls
-    ></video>
+    <div style="position: relative">
+      <video
+        id="videoElement2"
+        class="video-display"
+        style="display: none"
+        controls
+      ></video>
+      <video
+        id="camera"
+        class="rounded-circle camera"
+        width="100"
+        height="100"
+        autoplay
+      ></video>
+    </div>
     <div class="d-flex justify-content-center mt-3">
       <button
         :disabled="recordButtonDisabled"
@@ -29,40 +38,56 @@
         <i class="bi bi-save2"></i> Save Recording
       </button>
     </div>
+    <!-- <video
+      src="blob:http://127.0.0.1:5173/6de38b34-96a7-4bc6-adfb-b204e6bfa868"
+      controls
+    ></video> -->
+    <div v-for="(list, index) in lists" :key="index">
+      <video height="200" width="400" :src="list" controls></video>
+    </div>
+    <!-- {{ settings }} -->
   </div>
 </template>
 <script>
 import { useVideoRecordings } from "@/stores/videos.js";
-import { mapActions } from "pinia";
+import { mapActions, mapState } from "pinia";
 export default {
   name: "screen-capture",
   data() {
     return {
-      displayOptions: {
-        video: {
-          cursor: "always",
-          //   mediaSource: "screen",
-        },
-        audio: false,
-      },
+      displayOptions: {},
       videoCamera: "",
+      videoCapture: "",
       videoList: [],
       saveButtonDisabled: true,
       recordButtonDisabled: false,
+      lists: [],
     };
+  },
+  computed: {
+    ...mapState(useVideoRecordings, {
+      settings: "settings",
+      camera: "camera",
+    }),
   },
   methods: {
     async startCapture() {
+      this.displayOptions = this.settings;
+      //   console.log(this.displayOptions);
       this.recordButtonDisabled = true;
       this.videoCamera = document.querySelector("#videoElement");
+      this.videoCapture = document.querySelector("#camera");
       this.videoCamera.style.display = "block";
       document.querySelector("#videoElement2").style.display = "none";
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia(this.displayOptions);
+
+        if (this.camera == true) {
+          this.videoCapture.srcObject = await navigator.mediaDevices.getUserMedia(
+            this.displayOptions
+          );
+        }
         this.videoCamera.srcObject = stream;
-        // this.videoCamera.srcObject = await navigator.mediaDevices.getUserMedia(
-        //   this.displayOptions
-        // );
         var options = { mimeType: "video/webm;codecs=vp9" };
         const mediaRecorder = new MediaRecorder(stream, options);
         mediaRecorder.ondataavailable = (e) => {
@@ -83,6 +108,9 @@ export default {
           document.querySelector("#videoElement").style.display = "none";
           document.querySelector("#videoElement2").style.display = "block";
           document.querySelector("#videoElement2").src = URL.createObjectURL(superBuffer);
+          let tracks = this.videoCapture.srcObject.getTracks();
+          tracks.forEach((track) => track.stop());
+          this.videoCapture.srcObject = null;
           console.log(URL.createObjectURL(superBuffer));
         };
         console.log(this.videoCamera.srcObject);
@@ -96,12 +124,21 @@ export default {
 
     save() {
       var superBuffer = new Blob(this.videoList, {
-        type: this.videoList[0].type,
+        type: "video/mp4",
       });
+      const url = URL.createObjectURL(superBuffer);
+      this.lists.push(url);
+      console.log(this.lists);
+      const myFile = new File([superBuffer], "demo.mp4", { type: "video/mp4" });
       const Data = {
-        video: superBuffer,
+        url: url,
+        date: new Date(),
+        title: "Video" + new Date().getTime(),
+        description: "This is a simple description",
+        size: superBuffer.size,
       };
       let response = this.saveVideo(Data);
+      this.$router.push("/");
     },
   },
 };
@@ -116,5 +153,9 @@ export default {
   background: #21455e 0% 0% no-repeat padding-box;
   border-radius: 8px;
   opacity: 1;
+}
+.camera {
+  position: absolute;
+  bottom: 0;
 }
 </style>

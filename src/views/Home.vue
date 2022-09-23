@@ -8,7 +8,9 @@
     </nav>
     <div class="d-flex">
       <nav class="nav flex-grow-1 pe-3">
-        <a class="nav-link" aria-current="page" href="#"> <h3>My Recordings 0</h3></a>
+        <a class="nav-link" aria-current="page" href="#">
+          <h3>My Recordings {{ videoList.length || 0 }}</h3></a
+        >
       </nav>
       <nav class="nav justify-content-center flex-grow-1 pe-3">
         <a class="nav-link custom-links" aria-current="page" href="#"
@@ -76,7 +78,7 @@
       </nav>
     </div>
     <div>
-      <table class="table table-borderless">
+      <table class="table table-borderless table align-middle">
         <thead>
           <tr>
             <th scope="col">Recordings</th>
@@ -88,18 +90,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">
-              <div class="card" style="width: 8rem">
-                <!-- <img src="..." class="card-img-top" alt="..." /> -->
-                <div class="card-body">
-                  <h5 class="card-title">Card title</h5>
-                </div>
+          <tr v-for="(video, index) in videoList" :key="index">
+            <td>
+              <!-- <div class="card" style="width: 8rem"> -->
+              <!-- <img src="..." class="card-img-top" alt="..." /> -->
+              <div class="card-body">
+                <video style="width: 8rem" :src="video.url" controls></video>
               </div>
-            </th>
-            <td></td>
-            <td>Otto</td>
-            <td>@mdo</td>
+              <!-- </div> -->
+            </td>
+
+            <td>{{ video.title }}</td>
+            <td>0</td>
+            <td>
+              {{
+                parseFloat(video.size / 1000)
+                  .toFixed(2)
+                  .toLocaleString("en")
+              }}MB
+            </td>
+            <td>{{ moment(video.date).fromNow() }}</td>
           </tr>
         </tbody>
       </table>
@@ -142,6 +152,7 @@
               <div class="justify-content-start flex-grow-1 pe-3">Record Screen</div>
               <div class="form-check form-switch justify-content-end">
                 <input
+                  v-model="recordScreen"
                   data-onstyle="success"
                   class="form-check-input text-bg-success"
                   type="checkbox"
@@ -155,6 +166,7 @@
               <div class="justify-content-start flex-grow-1 pe-3">Record Camera</div>
               <div class="form-check form-switch justify-content-end">
                 <input
+                  v-model="recordCamera"
                   class="form-check-input text-bg-success"
                   type="checkbox"
                   role="switch"
@@ -167,6 +179,7 @@
               <div class="justify-content-start flex-grow-1 pe-3">Record Mic</div>
               <div class="form-check form-switch justify-content-end">
                 <input
+                  v-model="recordMic"
                   data-onstyle="success"
                   class="form-check-input text-bg-success"
                   type="checkbox"
@@ -203,14 +216,52 @@
 }
 </style>
 <script>
+import moment from "moment";
+import { useVideoRecordings } from "@/stores/videos.js";
+import { mapActions, mapState } from "pinia";
 export default {
   name: "home",
   data() {
-    return {};
+    return {
+      videoSrc: "",
+      recordCamera: false,
+      recordScreen: false,
+      recordMic: false,
+    };
+  },
+  created() {
+    this.moment = moment;
+  },
+  computed: {
+    ...mapState(useVideoRecordings, {
+      videoList: "videos",
+    }),
   },
   methods: {
+    ...mapActions(useVideoRecordings, ["saveSettings"]),
     start() {
-      this.$router.push("/capture");
+      if (
+        this.recordCamera == true ||
+        this.recordScreen == true ||
+        this.recordMic == true
+      ) {
+        const Data = {
+          video: {
+            cursor: "always",
+            //   mediaSource: "screen",
+          },
+          audio: this.recordMic,
+        };
+        const Camera = this.recordCamera;
+        try {
+          let response = this.saveSettings(Data, Camera);
+          this.$router.push("/capture");
+        } catch (e) {
+          console.log(e);
+        }
+      } else {
+        alert("Please select at one media to record");
+      }
     },
   },
 };

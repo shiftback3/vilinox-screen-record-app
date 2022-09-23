@@ -6,8 +6,10 @@ export const useVideoRecordings = defineStore("videos", {
 
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
-        videos: JSON.parse(localStorage.getItem('videos')),
-        settings: JSON.parse(localStorage.getItem('settings')),
+        videos: [],
+        // videos: JSON.parse(localStorage.getItem('videos')),
+        settings: [],
+        camera: [],
 
 
     }),
@@ -15,14 +17,27 @@ export const useVideoRecordings = defineStore("videos", {
         saveVideo(data) {
 
             // update pinia state
-            // this.videos = this.videos || [];
-            // this.videos.push(data.video)
+            this.videos = this.videos || [];
+            this.videos.push(data)
 
-            // localStorage.setItem('videos', JSON.stringify(this.videos.push(data.video)));
-            console.log(data.video)
+            // localStorage.setItem('videos', JSON.stringify(this.videos));
+            console.log(this.videos)
 
 
         },
+        saveSettings(data, camera) {
+
+            // update pinia state
+            this.settings = data;
+            this.camera = camera;
+
+
+            // localStorage.setItem('settings', JSON.stringify(this.settings));
+            console.log(this.settings, this.camera)
+
+
+        },
+
 
     }
 });

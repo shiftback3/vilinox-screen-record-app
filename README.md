@@ -33,3 +33,12 @@ npm run build
 ```sh
 npm run lint
 ```
+
+### Loom Demo video (https://www.loom.com/share/a4a9f04850a6457794fca1e05b78dada)
+
+### Netlify Link (https://tiny-piroshki-c77c46.netlify.app/)
+
+
+### My Portfolio (https://ogbugarubasunday.surge.sh/#portfolio)
+
+
